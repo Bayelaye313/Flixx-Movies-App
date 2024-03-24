@@ -2,17 +2,7 @@
 const global = {
     currentPage : window.location.pathname,
 }
-//highlighting links
-function highlightLinks() {
-    const links = document.querySelectorAll('.nav-link');
-    links.forEach((link)=>{
-        const path = link.getAttribute('href');
-        if (path == global.currentPage) {
-            link.classList.add('active');
-        }
 
-    });
-}
 //fetching function
 async function FetchingApiData(endpoint) {
     const API_KEY = '79dec438c9f9294ccb47ab53bb4ed955';
@@ -23,6 +13,7 @@ async function FetchingApiData(endpoint) {
     hiddenSpinner()
     return data   
 }
+
 //recuperation movies details
 async function responsePopularMovies() {
     const {results} = await FetchingApiData('movie/popular');
@@ -98,7 +89,6 @@ async function responsePopularShows() {
 async function displayMovieDetails() {
     const getId = window.location.search.split("=")[1];
     const movie = await FetchingApiData(`movie/${getId}`);
-    console.log(movie)
     displayBackgroundDetails('movie', movie.backdrop_path);
     const div = document.createElement("div");
     div.innerHTML = `
@@ -145,7 +135,6 @@ async function displayMovieDetails() {
     document.querySelector('#movie-details').appendChild(div);
     
 }
-
 // display tv shows details
 async function displayShowDetails() {
     const showId = window.location.search.split('=')[1];
@@ -214,7 +203,55 @@ async function displayShowDetails() {
     `;
   
     document.querySelector('#show-details').appendChild(div);
-  }
+}
+// display now playing slide
+async function responseNowPlaying() {
+  const {results} = await FetchingApiData('movie/now_playing');
+  results.forEach((movie)=>{
+    const div = document.createElement('div');
+    div.classList.add('swiper-slide');
+    div.innerHTML = `
+    <a href="movie-details.html?id=${movie.id}">
+      <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}" />
+    </a>
+    <h4 class="swiper-rating">
+      <i class="fas fa-star text-secondary"></i> ${movie.vote_average} / 10
+    </h4>
+    `
+    document.querySelector('.swiper-wrapper').appendChild(div)
+  })
+  initSlider()
+}
+
+//init swiper
+function initSlider() {
+  const swiper = new Swiper('.swiper', {
+    slidesPerView: 1,
+    spaceBetween: 30,
+    freeMode : true,
+    loop: true,
+    autoplay: {
+      delay: 3000,
+      disableOnInteraction: false
+    },
+    // using "ratio" endpoints
+    breakpoints: {
+      '@0.75': {
+        slidesPerView: 2,
+        spaceBetween: 20,
+      },
+      '@1.00': {
+        slidesPerView: 3,
+        spaceBetween: 40,
+      },
+      '@1.50': {
+        slidesPerView: 4,
+        spaceBetween: 50,
+      },
+    }
+  });
+  
+}
 //show spinner
 function showSpinner() {
     document.querySelector(".spinner").classList.add('show')
@@ -229,9 +266,18 @@ function hiddenSpinner() {
 function addCommasToNumber(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+//highlighting links
+function highlightLinks() {
+  const links = document.querySelectorAll('.nav-link');
+  links.forEach((link)=>{
+      const path = link.getAttribute('href');
+      if (path == global.currentPage) {
+          link.classList.add('active');
+      }
 
+  });
+}
 //display backdrop details pages
-
 function displayBackgroundDetails(type, backgroundImg) {
     const overlay = document.createElement("div");
     overlay.style.backgroundImage = `url(https://image.tmdb.org/t/p/original${backgroundImg})`;
@@ -259,7 +305,8 @@ function init() {
     switch (global.currentPage) {
         case "/":
         case "index.html":
-            responsePopularMovies();            
+            responsePopularMovies();
+            responseNowPlaying()            
             break;
         case "/shows.html":
             responsePopularShows();           
